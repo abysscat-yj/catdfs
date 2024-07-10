@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: catdfs
+
+server:
+  port: 8180
+
+catdfs:
+  path: D:\test\catdfs

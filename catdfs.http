@@ -1,0 +1,8 @@
+POST http://localhost:8180/upload
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="pom.xml"
+
+< D:\project\catdfs\pom.xml
+--WebAppBoundary--
