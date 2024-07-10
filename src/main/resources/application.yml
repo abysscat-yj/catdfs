@@ -3,7 +3,8 @@ spring:
     name: catdfs
 
 server:
-  port: 8180
+  port: 8080
 
 catdfs:
   path: D:\test\catdfs
+  backupUrl: http://localhost:8081/upload
