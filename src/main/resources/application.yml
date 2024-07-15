@@ -8,3 +8,4 @@ server:
 catdfs:
   path: D:\test\catdfs
   backupUrl: http://localhost:8081/upload
+  autoMd5: true
