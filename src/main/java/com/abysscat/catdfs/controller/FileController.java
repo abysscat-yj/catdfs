@@ -50,39 +50,61 @@ public class FileController {
 	@SneakyThrows
 	@PostMapping("/upload")
 	public String upload(@RequestParam MultipartFile file, HttpServletRequest request) {
-		String originalFilename = file.getOriginalFilename();
-		String fileName = request.getHeader(HttpSyncer.X_FILENAME_HEADER);
-
-		// 区分是否是其他服务同步过来的文件
-		boolean neeSync = false;
-		if(fileName == null || fileName.isEmpty()) {
-			// http头里没有fileName，即此时是用户上传的文件，需要同步到备份服务器
-			fileName = FileUtils.getUUIDFile(originalFilename);
-			neeSync = true;
-		}
+		String originalFileName = file.getOriginalFilename();
+		String uuidFileName = FileUtils.getUUIDFile(originalFileName);
 
 		// 获取当前文件待上传的目录名
-		String subDir = FileUtils.getSubDir(fileName);
-		File dest = new File(uploadPath + "/" + subDir + "/" + fileName);
+		String subDir = FileUtils.getSubDir(uuidFileName);
+		File dest = new File(uploadPath + "/" + subDir + "/" + uuidFileName);
 		file.transferTo(dest);
 
 		// 存放meta信息
 		FileMeta meta = new FileMeta();
-		meta.setName(fileName);
-		meta.setOriginalFilename(originalFilename);
+		meta.setName(uuidFileName);
+		meta.setOriginalFilename(originalFileName);
 		meta.setSize(file.getSize());
 		if(autoMd5) {
 			meta.getTags().put("md5", DigestUtils.md5DigestAsHex(new FileInputStream(dest)));
 		}
-		String metaName = fileName + ".meta";
+		String metaName = uuidFileName + ".meta";
 		File metaFile = new File(uploadPath + "/" + subDir + "/" + metaName);
 		FileUtils.writeMeta(metaFile, meta);
 
 		// 同步到备份服务器
-		if(neeSync) {
-			syncer.sync(dest, backupUrl);
+		syncer.sync(dest, backupUrl, originalFileName);
+
+		return uuidFileName;
+	}
+
+	@SneakyThrows
+	@PostMapping("/sync")
+	public String sync(@RequestParam MultipartFile file, HttpServletRequest request) {
+		String uuidFileName = file.getOriginalFilename();
+		// 从请求头获取原始文件名
+		String originFileName = request.getHeader(HttpSyncer.X_ORIGIN_FILENAME_HEADER);
+
+		if (originFileName == null || originFileName.isEmpty()) {
+			throw new RuntimeException("origin file name is empty");
 		}
-		return fileName;
+
+		// 获取当前文件待上传的目录名
+		String subDir = FileUtils.getSubDir(uuidFileName);
+		File dest = new File(uploadPath + "/" + subDir + "/" + uuidFileName);
+		file.transferTo(dest);
+
+		// 存放meta信息
+		FileMeta meta = new FileMeta();
+		meta.setName(uuidFileName);
+		meta.setOriginalFilename(originFileName);
+		meta.setSize(file.getSize());
+		if(autoMd5) {
+			meta.getTags().put("md5", DigestUtils.md5DigestAsHex(new FileInputStream(dest)));
+		}
+		String metaName = uuidFileName + ".meta";
+		File metaFile = new File(uploadPath + "/" + subDir + "/" + metaName);
+		FileUtils.writeMeta(metaFile, meta);
+
+		return uuidFileName;
 	}
 
 	@RequestMapping("/download")
