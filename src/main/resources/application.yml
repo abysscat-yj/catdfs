@@ -8,9 +8,17 @@ spring:
       max-request-size: 100MB
 
 server:
-  port: 8080
+  port: 8090
 
 catdfs:
   path: D:\test\catdfs
-  backupUrl: http://localhost:8081/sync
+  backupUrl: http://localhost:8091/sync
   autoMd5: true
+  syncBackup: false
+  group: C8090
+  downloadUrl: http://localhost:8090/download
+
+rocketmq:
+  name-server: localhost:9876
+  producer:
+    group: catdfs-producer

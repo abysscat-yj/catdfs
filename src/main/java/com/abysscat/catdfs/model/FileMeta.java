@@ -22,6 +22,8 @@ public class FileMeta {
 
 	private String originalFilename;
 
+	private String downloadUrl;
+
 	private long size;
 
 	private Map<String, String> tags = new HashMap<>();

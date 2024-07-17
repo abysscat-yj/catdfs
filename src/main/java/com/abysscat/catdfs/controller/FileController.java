@@ -1,8 +1,8 @@
 package com.abysscat.catdfs.controller;
 
 import com.abysscat.catdfs.model.FileMeta;
-import com.abysscat.catdfs.syncer.FileSyncer;
 import com.abysscat.catdfs.syncer.HttpSyncer;
+import com.abysscat.catdfs.syncer.MQSyncer;
 import com.abysscat.catdfs.utils.FileUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -41,11 +41,20 @@ public class FileController {
 	@Value("${catdfs.backupUrl:null}")
 	private String backupUrl;
 
+	@Value("${catdfs.downloadUrl}")
+	private String downloadUrl;
+
 	@Autowired
-	FileSyncer syncer;
+	HttpSyncer httpSyncer;
+
+	@Autowired
+	MQSyncer mqSyncer;
 
 	@Value("${catdfs.autoMd5}")
 	private boolean autoMd5;
+
+	@Value("${catdfs.syncBackup}")
+	private boolean syncBackup;
 
 	@SneakyThrows
 	@PostMapping("/upload")
@@ -63,6 +72,7 @@ public class FileController {
 		meta.setName(uuidFileName);
 		meta.setOriginalFilename(originalFileName);
 		meta.setSize(file.getSize());
+		meta.setDownloadUrl(downloadUrl);
 		if(autoMd5) {
 			meta.getTags().put("md5", DigestUtils.md5DigestAsHex(new FileInputStream(dest)));
 		}
@@ -71,7 +81,15 @@ public class FileController {
 		FileUtils.writeMeta(metaFile, meta);
 
 		// 同步到备份服务器
-		syncer.sync(dest, backupUrl, originalFileName);
+		if (syncBackup) {
+			try {
+				httpSyncer.sync(dest, backupUrl, originalFileName);
+			} catch (Exception e) {
+				mqSyncer.sync(meta);
+			}
+		} else {
+			mqSyncer.sync(meta);
+		}
 
 		return uuidFileName;
 	}

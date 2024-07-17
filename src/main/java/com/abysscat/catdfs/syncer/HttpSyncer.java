@@ -19,11 +19,10 @@ import java.io.File;
  * @Create: 2024/7/11 2:34
  */
 @Component
-public class HttpSyncer implements FileSyncer{
+public class HttpSyncer {
 
 	public final static String X_ORIGIN_FILENAME_HEADER = "X-Origin-Filename";
 
-	@Override
 	public boolean sync(File file, String backupUrl, String originFileName) {
 
 		RestTemplate restTemplate = new RestTemplate();
